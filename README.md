@@ -75,7 +75,7 @@ If you use cencro in your research please cite the following paper:
 @inproceedings{goering2019cencro,
     author = {Steve G\"oring and Christopher Kr\"ammer and Alexander Raake},
     title = {cencro -- Speedup of Video Quality Calculation using Center Cropping},
-    booktitle={2019 IEEE ISM},
+    booktitle={2019 IEEE International Symposium on Multimedia (ISM)},
     year = {2019},
     pages={1-8},
     month={Dec}
