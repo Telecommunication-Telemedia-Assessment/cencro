@@ -30,29 +30,60 @@ VMAF_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__fil
 VMAF_MODEL = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "./vmaf/model/vmaf_rb_v0.6.3/vmaf_rb_v0.6.3.pkl"))
 
 
+def __run_multi_line_cmd(cmd):
+    """
+    run a command that consists of several lines that are combined again
+
+    Parameters
+    ----------
+    cmd : str
+        command to run, e.g. cmd="ls \n -la" will run "ls -la"
+
+    TODO: move to utils/system?
+
+    Returns
+    -------
+    in case of error an error is thrown
+
+    Notes
+    -----
+    TODO: will be in future version not included in cencro
+    """
+    # remove multiple spaces in cmd
+    cmd = " ".join(cmd.split())
+    ret = os.system(cmd)
+    if ret != 0:
+        raise Exception(f"error in running command {cmd}")
+
+
 def to_yuv(src, yuv_result, pixel_format, height, width, framerate, center_crop=-1):
+    """
+    converts a given video to a yuv version according to the given format,
+    in case center_crop is not -1, it also performs a center cropping during conversion
+
+    """
     if os.path.isfile(yuv_result):
-        logging.info("{} already converted".format(yuv_result))
+        logging.info(f"{yuv_result} already converted")
         return
-    logging.info("convert {src} to {yuv_result}".format(**locals()))
+    logging.info(f"convert {src} to {yuv_result}")
     if center_crop > height:
-        logging.error("center_crop {center_crop} < video_height {height} must be ensured".format(**locals()))
+        logging.error(f"center_crop {center_crop} <= video_height {height} must be ensured")
         sys.exit(0)
         return
     if center_crop == -1:
-        cmd = " ".join("""
+        cmd = f"""
         ffmpeg -nostdin -loglevel quiet -threads 4 -y -i "{src}"
             -vf scale={width}:{height},fps={framerate}
             -c:v rawvideo
             -framerate {framerate}
             -pix_fmt {pixel_format} "{yuv_result}" 2>/dev/null
-        """.format(**locals()).split())
-        os.system(cmd)
+        """
+        __run_multi_line_cmd(cmd)
         return (width, height)
 
     center_crop_width = 2 * (int(center_crop * width / height) // 2)
 
-    cmd = """
+    cmd = f"""
     ffmpeg -nostdin -loglevel quiet -threads 4
     -y
     -i {src}
@@ -69,19 +100,22 @@ def to_yuv(src, yuv_result, pixel_format, height, width, framerate, center_crop=
     -framerate {framerate}
     -c:v rawvideo
     -an
-    {yuv_result} 2>/dev/null""".format(**locals())
+    {yuv_result} 2>/dev/null"""
 
-    cmd = " ".join(cmd.split())
-    #print(cmd)
-    os.system(cmd)
-
+    __run_multi_line_cmd(cmd)
     return
 
 
+def make_directories(dirs):
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
+
 def run_vmaf(ref, dis, tmp_folder_ref, tmp_folder_dis, report_folder, pixel_format="yuv422p10le", height=2160, width=3840, framerate=60, vmaf_model="vmaf_4k_v0.6.1.pkl", delete_yuv_ref=True, center_crop=-1):
-    os.makedirs(tmp_folder_ref, exist_ok=True)
-    os.makedirs(tmp_folder_dis, exist_ok=True)
-    os.makedirs(report_folder, exist_ok=True)
+    """
+    calculates vmaf scores for a given red and dis video; performs center cropping
+    """
+    make_directories([tmp_folder_ref, tmp_folder_dis, report_folder])
+
     cc_str = "_{center_crop}".format(center_crop=center_crop)
     yuv_ref = os.path.join(tmp_folder_ref, flat_name(get_basename(ref)) + "_" + flat_name(get_basename(os.path.basename(dis))) + cc_str + ".yuv")
     yuv_dis = os.path.join(tmp_folder_dis, flat_name(get_basename(dis)) + cc_str + ".yuv")
@@ -89,9 +123,10 @@ def run_vmaf(ref, dis, tmp_folder_ref, tmp_folder_dis, report_folder, pixel_form
     report_name = os.path.join(report_folder, flat_name(get_basename(dis)) + cc_str + ".json")
 
     if os.path.isfile(report_name):
-        logging.info("{} already calculated".format(report_name))
+        logging.info(f"{report_name} already calculated")
         return
-    logging.info("convert to yuv {ref}, {dis}".format(ref=ref, dis=dis))
+    logging.info(f"convert to yuv {ref}, {dis}")
+
     start_time = time.time()
     to_yuv(ref, yuv_ref, pixel_format, height, width, framerate, center_crop)
     ref_conversion_time = time.time() - start_time
@@ -105,11 +140,11 @@ def run_vmaf(ref, dis, tmp_folder_ref, tmp_folder_dis, report_folder, pixel_form
         yuv_width = 2 * (int(center_crop * width / height) // 2)
         yuv_height = center_crop
 
-    logging.info("calculate vamf {ref}, {dis}".format(ref=ref, dis=dis))
+    logging.info(f"calculate vamf {ref}, {dis}")
 
-    vmaf_cmd = """
+    vmaf_cmd = f"""
     {VMAF_PATH} {pixel_format} {yuv_width} {yuv_height} {yuv_ref} {yuv_dis} {VMAF_MODEL} --log {report_name} --log-fmt json --thread 0 --psnr --ssim --ci
-    """.format(VMAF_PATH=VMAF_PATH, pixel_format=pixel_format, yuv_width=yuv_width, yuv_height=yuv_height, yuv_ref=yuv_ref, yuv_dis=yuv_dis, VMAF_MODEL=VMAF_MODEL, report_name=report_name).strip()
+    """
     start_time = time.time()
     os.system(vmaf_cmd)
     vmaf_run_time = time.time() - start_time
@@ -118,16 +153,15 @@ def run_vmaf(ref, dis, tmp_folder_ref, tmp_folder_dis, report_folder, pixel_form
     if delete_yuv_ref:
         os.remove(yuv_ref)
 
-    with open("timings.ldjson", "a") as tfp:
-        tfp.write(json.dumps({
+    logging.info("timings: {}".format(json.dumps({
             "ref_conversion_time": ref_conversion_time,
             "dis_conversion_time": dis_conversion_time,
             "vmaf_run_time": vmaf_run_time,
             "crop": center_crop,
             "dis_video": dis
-        }) + "\n")
+    })))
 
-    logging.info("vmaf calculation done for {ref}, {dis}".format(ref=ref, dis=dis))
+    logging.info(f"vmaf calculation done for {ref}, {dis}")
     return report_name
 
 
@@ -156,11 +190,11 @@ def main(_):
     logging.info("calculate vmaf scores")
 
     a = vars(parser.parse_args())
-    logging.info("params: {}".format(json.dumps(a, indent=4)))
+    logging.info(f"params: {json.dumps(a, indent=4)}")
 
     assert_file(VMAF_PATH, "you need to have a compiled vmaf running, so run ./prepare.sh and check errors")
-    assert_file(a["reference_video"], """reference video {} does not exist""".format(a["reference_video"]))
-    assert_file(a["distorted_video"], """distorted video {} does not exist""".format(a["distorted_video"]))
+    assert_file(a["reference_video"], f"""reference video {a["reference_video"]} does not exist""")
+    assert_file(a["distorted_video"], f"""distorted video {a["distorted_video"]} does not exist""")
 
     if a["meta_from_ref"]:
         meta = ffprobe(a["reference_video"])
@@ -173,7 +207,7 @@ def main(_):
         a["center_crops"] = center_crops
 
     for center_crop in a["center_crops"]:
-        logging.info("handle center crop {center_crop}".format(center_crop=center_crop))
+        logging.info(f"handle center crop {center_crop}")
         run_vmaf(
             a["reference_video"],
             a["distorted_video"],
