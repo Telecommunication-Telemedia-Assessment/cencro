@@ -2,13 +2,11 @@
 A center cropped variant of Netflix's VMAF.
 
 
-
-
 ## Requirements
 * build essentials (and requirements for vmaf)
-* python >=3.5
-run (hope that you have avx2 cpu instruction)
+* python >=3.6
 
+To prepare the used vmaf tool run:
 ```
 ./prepare.sh
 ```
@@ -64,12 +62,12 @@ The simplest possible call is, assuming you have two videos, a reference `ref.mk
 ./cencro.py ref.mkv dis.mkv --meta_from_ref
 ```
 
-will calculate 360 center cropped VMAF scores atfer pre-processing the distorted video to the same resolution, framerate and pixel format as the reference video.
-A center crop of "-1" refers to a standard VMAF calculation without cropping, so called uncropped VMAF.
+It will calculate 360 center cropped VMAF scores atfer pre-processing the distorted video to the same resolution, framerate and pixel format as the reference video.
+A center crop of "-1" refers to a standard VMAF calculation without cropping, a so called uncropped VMAF.
 
 
 ## Reference
-If you use cencro in your research please cite the following paper:
+If you use `cencro` in your research please cite the following paper:
 
 ```
 @inproceedings{goering2019cencro,
@@ -82,10 +80,15 @@ If you use cencro in your research please cite the following paper:
 }
 ```
 
+## Acknowledgements
+
+If you use this software in your research, please include a link to the repository and reference our paper.
+
 ## Licence
+Except ffmpeg and other thirdparty software that have their own individual licences, the remaining software follows the:
+GNU General Public License v3. See LICENSE file in this repository.
 
 # TODO:
 * change to python 3.6
 * update vmaf model?
-* check if it works with current vmaf version?
 * instead of core use `quat`
