@@ -85,5 +85,5 @@ If you use `cencro` in your research please cite the following paper:
 If you use this software in your research, please include a link to the repository and reference our paper.
 
 ## Licence
-Except ffmpeg and other thirdparty software that have their own individual licences, the remaining software follows the:
+Except ffmpeg, VMAF and other thirdparty software that have their own individual licences, the remaining software follows the:
 GNU General Public License v3. See LICENSE file in this repository.
