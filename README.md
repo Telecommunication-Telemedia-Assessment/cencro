@@ -52,8 +52,7 @@ optional arguments:
   --meta_from_ref       estimate framerate, height, width, pixel_format from
                         reference video (default: False)
   --vmaf_model VMAF_MODEL
-                        used VMAF model (default: /home/sgoering/cencro/vmaf/m
-                        odel/vmaf_rb_v0.6.3/vmaf_rb_v0.6.3.pkl)
+                        used VMAF model (default: ./vmaf/model/vmaf_rb_v0.6.3/vmaf_rb_v0.6.3.pkl)
 
 stg7 2019
 ```
@@ -87,5 +86,5 @@ If you use `cencro` in your research please cite the following paper:
 If you use this software in your research, please include a link to the repository and reference our paper.
 
 ## Licence
-Except ffmpeg and other thirdparty software that have their own individual licences, the remaining software follows the:
+Except ffmpeg, VMAF and other thirdparty software that have their own individual licences, the remaining software follows the:
 GNU General Public License v3. See LICENSE file in this repository.
