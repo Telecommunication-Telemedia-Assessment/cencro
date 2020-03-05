@@ -11,6 +11,8 @@ To prepare the used vmaf tool run:
 ./prepare.sh
 ```
 
+Please check that `./vmaf/src/libvmaf/vmafossexec` exists and can be started.
+
 ## Usage
 
 ```
