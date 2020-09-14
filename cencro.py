@@ -200,6 +200,7 @@ def main(_):
         meta = ffprobe(a["reference_video"])
         logging.info("estimated meta data: \n {}".format(json.dumps(meta, indent=4, sort_keys=True)))
         a["height"] = meta["height"]
+        a["width"] = meta["width"]
         a["framerate"] = meta["avg_frame_rate"]
         a["pixel_format"] = meta["pix_fmt"]
 
